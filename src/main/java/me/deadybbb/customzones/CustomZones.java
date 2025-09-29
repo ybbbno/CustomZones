@@ -1,17 +1,30 @@
 package me.deadybbb.customzones;
 
-import org.bukkit.plugin.java.JavaPlugin;
+import co.aikar.commands.CommandManager;
+import co.aikar.commands.PaperCommandManager;
+import me.deadybbb.ybmj.PluginProvider;
+import org.bukkit.Bukkit;
 
-public final class CustomZones extends JavaPlugin {
+public final class CustomZones extends PluginProvider {
+    private ZonesHandler handler;
+    public CommandManager commandManager;
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
+        handler = new ZonesHandler(this);
 
+        commandManager = new PaperCommandManager(this);
+        commandManager.registerCommand(new ZonesCommand(this, handler));
+
+        handler.startTimer(0L, 20L);
+
+        Bukkit.getPluginManager().registerEvents(new DefaultZoneListener(this), this);
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        if (handler != null) {
+            handler.exit();
+        }
     }
 }

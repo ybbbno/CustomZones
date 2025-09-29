@@ -1,0 +1,4 @@
+permissions:
+  customzones.zone:
+    description: Доступ к команде /zone для управления зонами
+    default: op

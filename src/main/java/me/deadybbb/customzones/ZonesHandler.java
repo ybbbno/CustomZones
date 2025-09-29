@@ -1,39 +1,35 @@
-package me.deadybbb.myrosynthesis.customzone;
+package me.deadybbb.customzones;
 
-import me.deadybbb.myrosynthesis.basic.LegacyTextHandler;
-import me.deadybbb.myrosynthesis.customeffects.EffectsHandler;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import me.deadybbb.customzones.events.ZoneEnterEvent;
+import me.deadybbb.customzones.events.ZoneExitEvent;
+import me.deadybbb.customzones.events.ZoneStayEvent;
+import me.deadybbb.customzones.events.ZoneTickEvent;
+import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.entity.LivingEntity; // Changed from Player
-import org.bukkit.entity.Player;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 public class ZonesHandler {
-    private final ZonesConfigHandler configHandler;
-    private final EffectsHandler effectsHandler;
-    private final LegacyTextHandler textHandler;
-    private final JavaPlugin plugin;
+    private final ZonesConfigHandler configHandler;;
+    private final PluginProvider plugin;
 
     public List<Zone> zones;
     public final Map<UUID, Location> pos1 = new HashMap<>();
     public final Map<UUID, Location> pos2 = new HashMap<>();
-    final Map<UUID, BukkitRunnable> activeTasks = new HashMap<>();
 
-    public ZonesHandler(JavaPlugin plugin, EffectsHandler effectsHandler, LegacyTextHandler textHandler) {
+    private final Map<UUID, Map<String, BukkitRunnable>> activeTasks = new HashMap<>();
+    private final Map<String, Set<UUID>> zoneEntities = new HashMap<>();
+    private final Map<UUID, Map<String, Integer>> entityTicks = new HashMap<>();
+
+    public ZonesHandler(PluginProvider plugin) {
         configHandler = new ZonesConfigHandler(plugin);
         zones = configHandler.loadZonesFromConfig();
-        this.effectsHandler = effectsHandler;
-        this.textHandler = textHandler;
         this.plugin = plugin;
-
-        startTimer(0L, 20L);
     }
 
     public boolean reloadZonesFromConfig() {
@@ -41,18 +37,21 @@ public class ZonesHandler {
             zones = configHandler.loadZonesFromConfig();
             return true;
         } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to load zones config", e);
+            plugin.logger.severe("Failed to load zones config:" + e);
             return false;
         }
     }
 
-    public void startEffectsTimer(LivingEntity entity, Zone zone, long delay, long period) {
+    public void startTask(LivingEntity entity, Zone zone, long delay, long period) {
         if (entity == null || zone == null || delay < 0 || period <= 0) return;
         if (!isEntityInZone(entity, zone)) return;
 
         UUID entityId = entity.getUniqueId();
+        String zoneName = zone.name;
 
-        if (activeTasks.containsKey(entityId)) return;
+        activeTasks.computeIfAbsent(entityId, k -> new HashMap<>());
+
+        if (activeTasks.get(entityId).containsKey(zoneName)) return;
 
         BukkitRunnable task = new BukkitRunnable() {
             int ticks = 0;
@@ -60,105 +59,85 @@ public class ZonesHandler {
             public void run() {
                 if (!entity.isValid() || !isEntityInZone(entity, zone)) {
                     cancel();
-                    activeTasks.remove(entityId);
                     return;
                 }
 
-                // Only send action bar to players
-                if (entity instanceof Player player && zone.displayEnabled) {
-                    player.sendActionBar(textHandler.parseText("<green>Нахождение в зоне: " + ticks / 20 + " секунд (" + ticks + " тиков)"));
-                }
+                ZoneStayEvent stayEvent = new ZoneStayEvent(zone, entity, ticks);
+                Bukkit.getPluginManager().callEvent(stayEvent);
 
-                for (String effect : zone.effects) {
-                    effectsHandler.applyEffectById(entity, effect, ticks); // Updated to handle LivingEntity
-                }
                 ticks += (int) period;
+
+                entityTicks.computeIfAbsent(entityId, k -> new HashMap<>()).put(zone.name, ticks);
             }
         };
 
         task.runTaskTimer(plugin, delay, period);
-        activeTasks.put(entityId, task);
-    }
-
-    public List<String> getAllZonesNames(String zoneName) {
-        return zones.stream()
-                .map(zone -> zone.name)
-                .filter(name -> name.toLowerCase().startsWith(zoneName.toLowerCase()))
-                .toList();
-    }
-
-    public List<String> getAllEffectsNames(String effectName) {
-        return effectsHandler.effects.stream()
-                .map(effect -> effect.name)
-                .filter(name -> name.toLowerCase().startsWith(effectName.toLowerCase()))
-                .toList();
-    }
-
-    public boolean addEffectToZone(String name, String effect) {
-        if (name == null || effect == null) return false;
-        try {
-            Zone zone = zones.stream().filter(z -> z.name.equals(name)).findFirst().orElse(null);
-            if (zone == null || effectsHandler.effects.stream().noneMatch(e -> e.name.equals(effect))) {
-                return false;
-            }
-            if (!zone.effects.contains(effect)) {
-                zone.effects.add(effect);
-                saveZones();
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to add " + effect + " to zone " + name, e);
-            return false;
-        }
-    }
-
-    public boolean removeEffectFromZones(String effect) {
-        if (effect == null || effect.isEmpty()) return false;
-        try {
-            boolean modified = false;
-            for (Zone zone : zones) {
-                if (zone.effects.remove(effect)) {
-                    modified = true;
-                }
-            }
-            if (modified) {
-                saveZones();
-            }
-            return modified;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to remove effect " + effect + " from zones", e);
-            return false;
-        }
-    }
-
-    public boolean removeEffectFromZone(String name, String effect) {
-        if (name == null || effect == null) return false;
-        try {
-            Zone zone = zones.stream().filter(z -> z.name.equals(name)).findFirst().orElse(null);
-            if (zone == null) return false;
-            boolean removed = zone.effects.remove(effect);
-            if (removed) saveZones();
-            return removed;
-        } catch (Exception e) {
-            plugin.getLogger().log(Level.SEVERE, "Failed to remove effect " + effect + " from zone " + name, e);
-            return false;
-        }
+        activeTasks.get(entityId).put(zoneName, task);
     }
 
     public void startTimer(long delay, long period) {
         new BukkitRunnable() {
             @Override
             public void run() {
-                // Iterate over all worlds and their living entities
-                for (var world : Bukkit.getWorlds()) {
-                    for (LivingEntity entity : world.getLivingEntities()) {
-                        for (Zone zone : zones) {
-                            startEffectsTimer(entity, zone, delay, period);
+                for (Zone zone : zones) {
+                    if (zone.min.getWorld() == null) continue;
+
+                    // Finding current entities
+                    List<LivingEntity> currentEntities = zone.min.getWorld().getNearbyEntities(
+                            zone.getBoundingBox(),
+                            e -> e instanceof LivingEntity
+                    ).stream().map(e -> (LivingEntity) e).toList();
+
+                    String zoneName = zone.name;
+                    Set<UUID> previousUUIDs = zoneEntities.computeIfAbsent(zoneName, k -> new HashSet<>());
+                    Set<UUID> currentUUIDs = currentEntities.stream().map(LivingEntity::getUniqueId).collect(Collectors.toSet());
+
+                    // Detect enters
+                    for (UUID uuid : currentUUIDs) {
+                        if (!previousUUIDs.contains(uuid)) {
+                            LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
+                            if (entity != null) {
+                                ZoneEnterEvent enterEvent = new ZoneEnterEvent(zone, entity);
+                                Bukkit.getPluginManager().callEvent(enterEvent);
+                                if (!enterEvent.isCancelled()) {
+                                    startTask(entity, zone, 0L, period); // per-entity
+                                }
+                            }
                         }
                     }
+
+                    // Detect exits
+                    for (UUID uuid : new HashSet<>(previousUUIDs)) {
+                        if (!currentUUIDs.contains(uuid)) {
+                            LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
+                            if (entity != null) {
+                                int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zoneName, 0);
+                                ZoneExitEvent exitEvent = new ZoneExitEvent(zone, entity, ticksSpent);
+                                Bukkit.getPluginManager().callEvent(exitEvent);
+                                if (activeTasks.containsKey(uuid) && activeTasks.get(uuid).containsKey(zoneName)) {
+                                    activeTasks.get(uuid).get(zoneName).cancel();
+                                    activeTasks.get(uuid).remove(zoneName);
+                                    if (activeTasks.get(uuid).isEmpty()) {
+                                        activeTasks.remove(uuid);
+                                    }
+                                }
+                                if (entityTicks.containsKey(uuid)) {
+                                    entityTicks.get(uuid).remove(zoneName);
+                                    if (entityTicks.get(uuid).isEmpty()) {
+                                        entityTicks.remove(uuid);
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                    previousUUIDs.clear();
+                    previousUUIDs.addAll(currentUUIDs);
+
+                    ZoneTickEvent tickEvent = new ZoneTickEvent(zone, currentEntities);
+                    Bukkit.getPluginManager().callEvent(tickEvent);
                 }
-                displayZones();
             }
         }.runTaskTimer(plugin, delay, period);
     }
@@ -174,38 +153,29 @@ public class ZonesHandler {
                 loc.getZ() <= Math.max(zone.min.getZ(), zone.max.getZ());
     }
 
-    private void displayZones() {
-        for (Zone zone : zones) {
-            if (!zone.displayEnabled || zone.min.getWorld() == null) continue;
+    private boolean isLocationInZone(Location loc, Zone zone) {
+        return loc.getWorld().equals(zone.min.getWorld()) &&
+                loc.getX() >= Math.min(zone.min.getX(), zone.max.getX()) &&
+                loc.getX() <= Math.max(zone.min.getX(), zone.max.getX()) &&
+                loc.getY() >= Math.min(zone.min.getY(), zone.max.getY()) &&
+                loc.getY() <= Math.max(zone.min.getY(), zone.max.getY()) &&
+                loc.getZ() >= Math.min(zone.min.getZ(), zone.max.getZ()) &&
+                loc.getZ() <= Math.max(zone.min.getZ(), zone.max.getZ());
+    }
 
-            Location min = zone.min;
-            Location max = zone.max;
-            double minX = Math.min(min.getX(), max.getX());
-            double maxX = Math.max(min.getX(), max.getX());
-            double minY = Math.min(min.getY(), max.getY());
-            double maxY = Math.max(min.getY(), max.getY());
-            double minZ = Math.min(min.getZ(), max.getZ());
-            double maxZ = Math.max(min.getZ(), max.getZ());
+    public List<String> getAllZonesNames(String zoneName) {
+        return zones.stream()
+                .map(zone -> zone.name)
+                .filter(name -> name.toLowerCase().startsWith(zoneName.toLowerCase()))
+                .toList();
+    }
 
-            for (double x = minX; x <= maxX; x += 1.0) {
-                for (double z = minZ; z <= maxZ; z += 1.0) {
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, x, minY, z, 1, 0, 0, 0, 0);
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, x, maxY, z, 1, 0, 0, 0, 0);
-                }
-            }
-            for (double y = minY; y <= maxY; y += 1.0) {
-                for (double z = minZ; z <= maxZ; z += 1.0) {
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, minX, y, z, 1, 0, 0, 0, 0);
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, maxX, y, z, 1, 0, 0, 0, 0);
-                }
-            }
-            for (double x = minX; x <= maxX; x += 1.0) {
-                for (double y = minY; y <= maxY; y += 1.0) {
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, x, y, minZ, 1, 0, 0, 0, 0);
-                    min.getWorld().spawnParticle(Particle.VILLAGER_HAPPY, x, y, maxZ, 1, 0, 0, 0, 0);
-                }
-            }
-        }
+    public Zone getZoneByName(String name) {
+        return zones.stream().filter(z -> z.name.equalsIgnoreCase(name)).findFirst().orElse(null);
+    }
+
+    public List<Zone> getZonesAtLocation(Location location) {
+        return zones.stream().filter(z -> isLocationInZone(location, z)).collect(Collectors.toList());
     }
 
     public void saveZones() {
@@ -214,7 +184,14 @@ public class ZonesHandler {
 
     public void exit() {
         saveZones();
+        for (Map<String, BukkitRunnable> tasks : activeTasks.values()) {
+            for (BukkitRunnable task : tasks.values()) {
+                task.cancel();
+            }
+        }
         activeTasks.clear();
+        entityTicks.clear();
+        zoneEntities.clear();
         zones.clear();
     }
 }

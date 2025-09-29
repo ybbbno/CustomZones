@@ -2,8 +2,8 @@ package me.deadybbb.customzones;
 
 import me.deadybbb.customzones.events.ZoneStayEvent;
 import me.deadybbb.customzones.events.ZoneTickEvent;
-import me.deadybbb.customzones.ybbbbasicmodule.LegacyTextHandler;
-import me.deadybbb.customzones.ybbbbasicmodule.PluginProvider;
+import me.deadybbb.ybmj.LegacyTextHandler;
+import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -16,7 +16,6 @@ public class DefaultZoneListener implements Listener {
 
     public DefaultZoneListener(PluginProvider plugin) {
         this.plugin = plugin;
-        Bukkit.getPluginManager().registerEvents(this, plugin);
     }
 
     @EventHandler
@@ -36,7 +35,7 @@ public class DefaultZoneListener implements Listener {
         Location min = zone.min;
         Location max = zone.max;
         double minX = Math.min(min.getX(), max.getX());
-        double maxX = Math.max(min.getX(), max.getY());
+        double maxX = Math.max(min.getX(), max.getX());
         double minY = Math.min(min.getY(), max.getY());
         double maxY = Math.max(min.getY(), max.getY());
         double minZ = Math.min(min.getZ(), max.getZ());

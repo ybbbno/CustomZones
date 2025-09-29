@@ -1,50 +1,59 @@
-package me.deadybbb.myrosynthesis.customzone;
+package me.deadybbb.customzones;
 
-import me.deadybbb.myrosynthesis.basic.BasicConfigHandler;
-import me.deadybbb.myrosynthesis.custombooks.Book;
+import me.deadybbb.ybmj.BasicConfigHandler;
+import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.configuration.ConfigurationSection;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class ZonesConfigHandler extends BasicConfigHandler {
-    public ZonesConfigHandler(JavaPlugin plugin) {
+    private final PluginProvider plugin;
+
+    public ZonesConfigHandler(PluginProvider plugin) {
         super(plugin, "zones_config.yml");
+        this.plugin = plugin;
     }
 
     public List<Zone> loadZonesFromConfig() {
         reloadConfig();
         List<Zone> zones = new ArrayList<>();
-        if (config.getConfigurationSection("zones") == null) return zones;
+        ConfigurationSection zonesSection = config.getConfigurationSection("zones");
+        if (zonesSection == null) return zones;
 
-        for (String zoneName : config.getConfigurationSection("zones").getKeys(false)) {
-            String path = "zones." + zoneName;
-            String worldName = config.getString(path + ".world");
-            if (worldName == null || Bukkit.getWorld(worldName) == null) {
-                plugin.getLogger().warning("Invalid world for zone " + zoneName);
+        for (String zoneID : zonesSection.getKeys(false)) {
+            ConfigurationSection section = config.getConfigurationSection("zones." + zoneID);
+            if (section == null) continue;
+
+            String worldName = section.getString(".world");
+            if (worldName == null) {
+                plugin.logger.warning("Invalid world for zone " + zoneID);
                 continue;
             }
+            if (Bukkit.getWorld(worldName) == null) {
+                plugin.logger.warning("World " + worldName + " not found for zone " + zoneID);
+            }
+
             Location min = new Location(
                     Bukkit.getWorld(worldName),
-                    config.getDouble(path + ".min.x"),
-                    config.getDouble(path + ".min.y"),
-                    config.getDouble(path + ".min.z")
-            );
-            Location max = new Location(
-                    Bukkit.getWorld(worldName),
-                    config.getDouble(path + ".max.x"),
-                    config.getDouble(path + ".max.y"),
-                    config.getDouble(path + ".max.z")
+                    section.getDouble(".min.x"),
+                    section.getDouble(".min.y"),
+                    section.getDouble(".min.z")
             );
 
-            List<String> effects = config.getStringList(path + ".effects");
-            boolean display = config.getBoolean(path + ".display", false);
-            zones.add(new Zone(zoneName, min, max, effects, display));
+            Location max = new Location(
+                    Bukkit.getWorld(worldName),
+                    section.getDouble(".max.x"),
+                    section.getDouble(".max.y"),
+                    section.getDouble(".max.z")
+            );
+
+            boolean display = section.getBoolean(".display", false);
+            zones.add(new Zone(zoneID, min, max, display));
         }
-        plugin.getLogger().info("Loaded " + zones.size() + " zones.");
+        plugin.logger.info("Loaded " + zones.size() + " zones.");
         return zones;
     }
 
@@ -60,7 +69,6 @@ public class ZonesConfigHandler extends BasicConfigHandler {
             config.set(path + ".max.x", zone.max.getX());
             config.set(path + ".max.y", zone.max.getY());
             config.set(path + ".max.z", zone.max.getZ());
-            config.set(path + ".effects", zone.effects);
             config.set(path + ".display", zone.displayEnabled);
         }
 

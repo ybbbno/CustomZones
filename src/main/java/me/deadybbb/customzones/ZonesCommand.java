@@ -1,8 +1,11 @@
 package me.deadybbb.customzones;
 
 import co.aikar.commands.BaseCommand;
+import co.aikar.commands.BukkitCommandCompletionContext;
+import co.aikar.commands.BukkitCommandCompletions;
+import co.aikar.commands.CommandCompletions;
 import co.aikar.commands.annotation.*;
-import me.deadybbb.customzones.ybbbbasicmodule.LegacyTextHandler;
+import me.deadybbb.ybmj.LegacyTextHandler;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,10 +16,13 @@ import java.util.List;
 @CommandAlias("zone")
 @CommandPermission("customzones.zone")
 public class ZonesCommand extends BaseCommand {
+    private final CustomZones plugin;
     private final ZonesHandler zonesHandler;
 
-    public ZonesCommand(ZonesHandler zonesHandler) {
+    public ZonesCommand(CustomZones plugin, ZonesHandler zonesHandler) {
+        this.plugin = plugin;
         this.zonesHandler = zonesHandler;
+        completeZones();
     }
 
     @Default
@@ -27,6 +33,11 @@ public class ZonesCommand extends BaseCommand {
             return;
         }
         LegacyTextHandler.sendFormattedMessage(player, "<red>Использование: /zone <create|pos1|pos2|toggle|remove|change|reload> [name]");
+    }
+
+    public void completeZones() {
+        CommandCompletions<BukkitCommandCompletionContext> commandCompletions = plugin.commandManager.getCommandCompletions();
+        commandCompletions.registerCompletion("zones", c -> zonesHandler.getAllZonesNames(c.getInput()));
     }
 
     @Subcommand("pos1")
@@ -119,10 +130,5 @@ public class ZonesCommand extends BaseCommand {
         } else {
             LegacyTextHandler.sendFormattedMessage(player, "<red>Конфигурация не была загружена!");
         }
-    }
-
-    @CommandCompletion("@zones")
-    public List<String> completeZones(Player player, String input) {
-        return zonesHandler.getAllZonesNames(input);
     }
 }

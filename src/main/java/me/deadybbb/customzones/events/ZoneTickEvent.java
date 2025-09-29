@@ -7,29 +7,27 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class ZoneStayEvent extends Event implements Cancellable {
+import java.util.List;
+
+public class ZoneTickEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled = false;
 
     private final Zone zone;
-    private final LivingEntity entity;
-    private final int currentTicks;
+    private final List<LivingEntity> entitiesInZone;
 
-    public ZoneStayEvent(Zone zone, LivingEntity entity, int currentTicks) {
+    public ZoneTickEvent(Zone zone, List<LivingEntity> entitiesInZone) {
         this.zone = zone;
-        this.entity = entity;
-        this.currentTicks = currentTicks;
+        this.entitiesInZone = entitiesInZone;
     }
 
     public Zone getZone() {
         return zone;
     }
 
-    public LivingEntity getEntity() {
-        return entity;
+    public List<LivingEntity> getEntitiesInZone() {
+        return entitiesInZone;
     }
-
-    public int getCurrentTicks() { return currentTicks; }
 
     @Override
     public boolean isCancelled() {

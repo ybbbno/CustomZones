@@ -7,16 +7,18 @@ import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 
-public class ZoneEnterEvent extends Event implements Cancellable {
+public class ZoneExitEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled = false;
 
     private final Zone zone;
     private final LivingEntity entity;
+    private final int ticksSpent;
 
-    public ZoneEnterEvent(Zone zone, LivingEntity entity) {
+    public ZoneExitEvent(Zone zone, LivingEntity entity, int ticksSpent) {
         this.zone = zone;
         this.entity = entity;
+        this.ticksSpent = ticksSpent;
     }
 
     public Zone getZone() {
@@ -26,6 +28,8 @@ public class ZoneEnterEvent extends Event implements Cancellable {
     public LivingEntity getEntity() {
         return entity;
     }
+
+    public int getTicksSpent() { return ticksSpent; }
 
     @Override
     public boolean isCancelled() {
