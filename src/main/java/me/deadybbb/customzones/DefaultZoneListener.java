@@ -4,7 +4,6 @@ import me.deadybbb.customzones.events.ZoneStayEvent;
 import me.deadybbb.customzones.events.ZoneTickEvent;
 import me.deadybbb.ybmj.LegacyTextHandler;
 import me.deadybbb.ybmj.PluginProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;

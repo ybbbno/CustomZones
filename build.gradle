@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id("com.gradleup.shadow") version "8.3.0"
 }
 
 group = 'me.deadybbb'
@@ -15,9 +14,9 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT")
+    compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
+    compileOnly "dev.jorel:commandapi-bukkit-core:10.1.2"
     compileOnly(files("./libs/YBMJ-0.1.jar"))
-    implementation("co.aikar:acf-paper:0.5.1-SNAPSHOT")
 }
 
 def targetJavaVersion = 21
@@ -29,11 +28,3 @@ java {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
-
-shadowJar {
-    relocate 'co.aikar.commands', 'me.deadybbb.acf'
-    relocate 'co.aikar.locales', 'me.deadybbb.locales'
-    minimize()
-}
-
-build.dependsOn shadowJar

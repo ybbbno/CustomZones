@@ -164,6 +164,11 @@ public class ZonesHandler {
     }
 
     public List<String> getAllZonesNames(String zoneName) {
+        if (Objects.equals(zoneName, "")) {
+            return zones.stream()
+                    .map(zone -> zone.name)
+                    .toList();
+        }
         return zones.stream()
                 .map(zone -> zone.name)
                 .filter(name -> name.toLowerCase().startsWith(zoneName.toLowerCase()))

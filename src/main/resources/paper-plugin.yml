@@ -9,3 +9,7 @@ dependencies:
     YBMJ:
       load: BEFORE
       required: true
+    CommandAPI:
+      load: BEFORE
+      required: true
+      join-classpath: true
