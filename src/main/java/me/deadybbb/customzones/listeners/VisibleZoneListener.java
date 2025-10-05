@@ -1,25 +1,22 @@
-package me.deadybbb.customzones;
+package me.deadybbb.customzones.listeners;
 
+import me.deadybbb.customzones.Zone;
 import me.deadybbb.customzones.events.ZoneStayEvent;
 import me.deadybbb.customzones.events.ZoneTickEvent;
+import me.deadybbb.customzones.prefixes.CustomZonePrefix;
 import me.deadybbb.ybmj.LegacyTextHandler;
-import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class DefaultZoneListener implements Listener {
-    private final PluginProvider plugin;
-
-    public DefaultZoneListener(PluginProvider plugin) {
-        this.plugin = plugin;
-    }
+@CustomZonePrefix("visible")
+public class VisibleZoneListener implements Listener {
 
     @EventHandler
     public void onZoneStay(ZoneStayEvent event) {
-        if (!(event.getEntity() instanceof Player player) || !event.getZone().displayEnabled) return;
+        if (!(event.getEntity() instanceof Player player)) return;
 
         player.sendActionBar(LegacyTextHandler.parseText(
                 "<green>Нахождение в зоне " + event.getZone().name + ": " + event.getCurrentTicks() / 20 + " секунд (" + event.getCurrentTicks() + " тиков)"
@@ -29,7 +26,7 @@ public class DefaultZoneListener implements Listener {
     @EventHandler
     public void onZoneTick(ZoneTickEvent event) {
         Zone zone = event.getZone();
-        if (!zone.displayEnabled || zone.min.getWorld() == null) return;
+        if (zone.min.getWorld() == null) return;
 
         Location min = zone.min;
         Location max = zone.max;

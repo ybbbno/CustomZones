@@ -9,10 +9,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZonesConfigHandler extends BasicConfigHandler {
+public class ZoneConfigHandler extends BasicConfigHandler {
     private final PluginProvider plugin;
 
-    public ZonesConfigHandler(PluginProvider plugin) {
+    public ZoneConfigHandler(PluginProvider plugin) {
         super(plugin, "zones_config.yml");
         this.plugin = plugin;
     }
@@ -50,8 +50,8 @@ public class ZonesConfigHandler extends BasicConfigHandler {
                     section.getDouble(".max.z")
             );
 
-            boolean display = section.getBoolean(".display", false);
-            zones.add(new Zone(zoneID, min, max, display));
+            List<String> prefixes = section.getStringList(".prefixes");
+            zones.add(new Zone(zoneID, min, max, prefixes));
         }
         plugin.logger.info("Loaded " + zones.size() + " zones.");
         return zones;
@@ -69,7 +69,7 @@ public class ZonesConfigHandler extends BasicConfigHandler {
             config.set(path + ".max.x", zone.max.getX());
             config.set(path + ".max.y", zone.max.getY());
             config.set(path + ".max.z", zone.max.getZ());
-            config.set(path + ".display", zone.displayEnabled);
+            config.set(path + ".prefixes", zone.prefixes);
         }
 
         return saveConfig();

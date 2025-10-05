@@ -1,20 +1,29 @@
 package me.deadybbb.customzones;
 
+import me.deadybbb.customzones.listeners.DefaultZoneListener;
+import me.deadybbb.customzones.listeners.VisibleZoneListener;
+import me.deadybbb.customzones.listeners.ZoneListenerRegistry;
+import me.deadybbb.customzones.prefixes.PrefixConfigHandler;
+import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 
 public final class CustomZones extends PluginProvider {
-    private ZonesHandler handler;
+    private ZoneHandler handler;
+    private PrefixHandler prefixHandler;
 
     @Override
     public void onEnable() {
-        handler = new ZonesHandler(this);
+        prefixHandler = new PrefixHandler(this, new PrefixConfigHandler(this));
+        handler = new ZoneHandler(this, prefixHandler);
+        ZoneListenerRegistry.initialize(this, prefixHandler);
 
-        new CustomZonesCommand(this, handler).registerCommand();
+        Bukkit.getPluginManager().registerEvents(new DefaultZoneListener(handler), this);
+        ZoneListenerRegistry.registerListener(this, new VisibleZoneListener());
+
+        new CustomZonesCommand(this, handler, prefixHandler).registerCommand();
 
         handler.startTimer(0L, 20L);
-
-        Bukkit.getPluginManager().registerEvents(new DefaultZoneListener(this), this);
     }
 
     @Override

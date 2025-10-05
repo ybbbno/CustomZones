@@ -4,21 +4,22 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
+import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.LegacyTextHandler;
 import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class CustomZonesCommand {
     private final CustomZones plugin;
-    private final ZonesHandler handler;
+    private final ZoneHandler handler;
+    private final PrefixHandler prefixHandler;
 
-    public CustomZonesCommand(CustomZones plugin, ZonesHandler handler) {
+    public CustomZonesCommand(CustomZones plugin, ZoneHandler handler, PrefixHandler prefixHandler) {
         this.plugin = plugin;
         this.handler = handler;
+        this.prefixHandler = prefixHandler;
     }
 
     public void registerCommand() {
@@ -65,26 +66,9 @@ public class CustomZonesCommand {
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Установите обе точки в одном мире!");
                         return;
                     }
-                    handler.zones.add(new Zone(zoneName, p1, p2, false));
+                    handler.zones.add(new Zone(zoneName, p1, p2, List.of("visible")));
                     handler.saveZones();
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Зона " + zoneName + " создана!");
-                });
-
-        // Subcommand: toggle
-        CommandAPICommand toggle = new CommandAPICommand("toggle")
-                .withShortDescription("Включает или выключает отображение зоны")
-                .withArguments(new StringArgument("zoneName").replaceSuggestions(ArgumentSuggestions.strings(info ->
-                        handler.getAllZonesNames("").toArray(new String[0]))))
-                .executesPlayer((PlayerCommandExecutor) (player, args) -> {
-                    String zoneName = (String) args.get("zoneName");
-                    Zone toggleZone = handler.getZoneByName(zoneName);
-                    if (toggleZone == null) {
-                        LegacyTextHandler.sendFormattedMessage(player, "<red>Зона " + zoneName + " не найдена!");
-                        return;
-                    }
-                    toggleZone.displayEnabled = !toggleZone.displayEnabled;
-                    handler.saveZones();
-                    LegacyTextHandler.sendFormattedMessage(player, "<green>Отображение зоны " + zoneName + " " + (toggleZone.displayEnabled ? "включено" : "выключено"));
                 });
 
         // Subcommand: remove
@@ -139,7 +123,55 @@ public class CustomZonesCommand {
                     }
                 });
 
+        // Subcommand: addprefix
+        CommandAPICommand addPrefix = new CommandAPICommand("addprefix")
+                .withShortDescription("Добавляет префикс к зоне")
+                .withArguments(
+                        new StringArgument("zoneName").replaceSuggestions(ArgumentSuggestions.strings(info ->
+                                handler.getAllZonesNames("").toArray(new String[0]))),
+                        new StringArgument("prefix").replaceSuggestions(ArgumentSuggestions.strings(info ->
+                                prefixHandler.getPrefixes().toArray(new String[0])))
+                )
+                .executesPlayer((PlayerCommandExecutor) (player, args) -> {
+                    String zoneName = (String) args.get("zoneName");
+                    String prefix = (String) args.get("prefix");
+                    Zone zone = handler.getZoneByName(zoneName);
+                    if (zone == null) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Зона " + zoneName + " не найдена!");
+                        return;
+                    }
+                    zone.addPrefix(prefix);
+                    handler.saveZones();
+                    LegacyTextHandler.sendFormattedMessage(player, "<green>Префикс " + prefix + " добавлен к зоне " + zoneName);
+                });
+
+        // Subcommand: removeprefix
+        CommandAPICommand removePrefix = new CommandAPICommand("removeprefix")
+                .withShortDescription("Удаляет префикс из зоны")
+                .withArguments(
+                        new StringArgument("zoneName").replaceSuggestions(ArgumentSuggestions.strings(info ->
+                                handler.getAllZonesNames("").toArray(new String[0]))),
+                        new StringArgument("prefix").replaceSuggestions(ArgumentSuggestions.strings(info ->
+                                prefixHandler.getPrefixes().toArray(new String[0])))
+                )
+                .executesPlayer((PlayerCommandExecutor) (player, args) -> {
+                    String zoneName = (String) args.get("zoneName");
+                    String prefix = (String) args.get("prefix");
+                    Zone zone = handler.getZoneByName(zoneName);
+                    if (zone == null) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Зона " + zoneName + " не найдена!");
+                        return;
+                    }
+                    if (!zone.hasPrefix(prefix)) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Префикс " + prefix + " не найден в зоне " + zoneName);
+                        return;
+                    }
+                    zone.removePrefix(prefix);
+                    handler.saveZones();
+                    LegacyTextHandler.sendFormattedMessage(player, "<green>Префикс " + prefix + " удалён из зоны " + zoneName);
+                });
+
         // Register the main command with all subcommands
-        zoneCommand.withSubcommands(pos1, pos2, create, toggle, remove, change, reload).register();
+        zoneCommand.withSubcommands(pos1, pos2, create, remove, change, reload, addPrefix, removePrefix).register();
     }
 }
