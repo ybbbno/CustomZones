@@ -9,6 +9,7 @@ import me.deadybbb.ybmj.LegacyTextHandler;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class CustomZonesCommand {
@@ -66,7 +67,7 @@ public class CustomZonesCommand {
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Установите обе точки в одном мире!");
                         return;
                     }
-                    handler.zones.add(new Zone(zoneName, p1, p2, List.of("visible")));
+                    handler.zones.add(new Zone(zoneName, p1, p2, new ArrayList<>(List.of())));
                     handler.saveZones();
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Зона " + zoneName + " создана!");
                 });

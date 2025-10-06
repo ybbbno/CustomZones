@@ -1,24 +1,13 @@
 package me.deadybbb.customzones;
 
-import me.deadybbb.customzones.events.ZoneEnterEvent;
-import me.deadybbb.customzones.events.ZoneExitEvent;
-import me.deadybbb.customzones.events.ZoneStayEvent;
-import me.deadybbb.customzones.events.ZoneTickEvent;
-import me.deadybbb.customzones.prefixes.CustomZonePrefix;
+import me.deadybbb.customzones.events.*;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.event.Event;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.HandlerList;
-import org.bukkit.event.Listener;
-import org.bukkit.plugin.RegisteredListener;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.BoundingBox;
 
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,6 +15,7 @@ public class ZoneHandler {
     private final ZoneConfigHandler configHandler;
     private final PluginProvider plugin;
     private final PrefixHandler handler;
+    private final ZoneEventDispatcher dispatcher;
 
     public List<Zone> zones;
     public final Map<UUID, Location> pos1 = new HashMap<>();
@@ -40,6 +30,26 @@ public class ZoneHandler {
         zones = configHandler.loadZonesFromConfig();
         this.plugin = plugin;
         this.handler = handler;
+        this.dispatcher = new ZoneEventDispatcher(plugin, handler);
+    }
+
+    public void triggerEnter(UUID uuid, Zone zone) {
+        LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
+        if (entity != null) {
+            if (!dispatcher.onZoneEnter(zone, uuid).isCancelled()) {
+                startTask(uuid, zone);
+            }
+        }
+    }
+
+    public void triggerExit(UUID uuid, Zone zone) {
+        LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
+        if (entity != null) {
+            int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zone.name, 0);
+            if (!dispatcher.onZoneExit(zone, uuid, ticksSpent).isCancelled()) {
+                cancelTask(uuid, zone);
+            }
+        }
     }
 
     public void startTimer(long delay, long period) {
@@ -62,58 +72,33 @@ public class ZoneHandler {
                     // Detect enters
                     for (UUID uuid : currentUUIDs) {
                         if (!previousUUIDs.contains(uuid)) {
-                            LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
-                            if (entity != null) {
-                                triggerEnterEvent(uuid, zone);
-                            }
+                            triggerEnter(uuid, zone);
                         }
                     }
 
                     // Detect exits
                     for (UUID uuid : new HashSet<>(previousUUIDs)) {
                         if (!currentUUIDs.contains(uuid)) {
-                            LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
-                            if (entity != null) {
-                                triggerExitEvent(uuid, zone);
-                            }
+                            triggerExit(uuid, zone);
                         }
                     }
 
                     zoneEntities.put(zone.name, currentUUIDs);
 
-                    ZoneTickEvent tickEvent = new ZoneTickEvent(zone, currentEntities);
-                    callEventWithPrefixFilter(tickEvent, zone);
+                    dispatcher.onZoneTick(zone, currentEntities);
                 }
             }
         }.runTaskTimer(plugin, delay, period);
     }
 
-    public void triggerExitEvent(UUID uuid, Zone zone) {
-        int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zone.name, 0);
-        ZoneExitEvent exitEvent = new ZoneExitEvent(zone, (LivingEntity) Bukkit.getEntity(uuid), ticksSpent);
-        callEventWithPrefixFilter(exitEvent, zone);
-        cancelTask(uuid, zone);
-    }
-
-    public void triggerEnterEvent(UUID uuid, Zone zone) {
-        LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
-        ZoneEnterEvent enterEvent = new ZoneEnterEvent(zone, entity);
-        callEventWithPrefixFilter(enterEvent, zone);
-        if (!enterEvent.isCancelled()) {
-            startTask(entity, zone); // per-entity
-        }
-    }
-
-    private void startTask(LivingEntity entity, Zone zone) {
-        UUID uuid = entity.getUniqueId();
+    private void startTask(UUID uuid, Zone zone) {
         Map<String, BukkitRunnable> entityTasks = activeTasks.computeIfAbsent(uuid, k -> new HashMap<>());
         if (!entityTasks.containsKey(zone.name)) {
             BukkitRunnable task = new BukkitRunnable() {
                 @Override
                 public void run() {
                     int ticks = entityTicks.computeIfAbsent(uuid, k -> new HashMap<>()).compute(zone.name, (k, v) -> v == null ? 20 : v + 20);
-                    ZoneStayEvent stayEvent = new ZoneStayEvent(zone, entity, ticks);
-                    callEventWithPrefixFilter(stayEvent, zone);
+                    dispatcher.onZoneStay(zone, uuid, ticks);
                     // plugin.logger.info(entity.getName() + ", " + ticks); remove player on exit
                 }
             };
@@ -142,31 +127,8 @@ public class ZoneHandler {
         }
     }
 
-    private void callEventWithPrefixFilter(Event event, Zone zone) {
-        List<String> zonePrefixes = zone.prefixes.stream().map(String::toLowerCase).toList();
-
-        for (String zonePrefix : zonePrefixes) {
-            Listener listener = handler.getListenerByPrefix(zonePrefix);
-            if (listener == null) {
-                continue;
-            }
-
-            for (Method method : listener.getClass().getDeclaredMethods()) {
-                if (method.isAnnotationPresent(EventHandler.class) &&
-                    method.getParameterCount() == 1 &&
-                    method.getParameterTypes()[0].isAssignableFrom(event.getClass())) {
-                    try {
-                        method.setAccessible(true);
-                        method.invoke(listener, event);
-                        plugin.logger.info("Invoked " + method.getName() + " on listener for prefix '" +
-                                zonePrefix + "' (event: " + event.getEventName() + ")");
-                    } catch (Exception ex) {
-                        plugin.logger.severe("Error invoking event handler for prefix '" + zonePrefix + "': " + ex.getMessage());
-                    }
-                    break;
-                }
-            }
-        }
+    public ZoneEventDispatcher getDispatcher() {
+        return dispatcher;
     }
 
     public boolean reloadZonesFromConfig() {
