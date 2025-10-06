@@ -1,7 +1,6 @@
 package me.deadybbb.customzones;
 
 import me.deadybbb.customzones.listeners.DefaultZoneListener;
-import me.deadybbb.customzones.listeners.PillagerOutpostListener;
 import me.deadybbb.customzones.listeners.VisibleZoneListener;
 import me.deadybbb.customzones.listeners.ZoneListenerRegistry;
 import me.deadybbb.customzones.prefixes.PrefixConfigHandler;
@@ -21,7 +20,6 @@ public final class CustomZones extends PluginProvider {
 
         Bukkit.getPluginManager().registerEvents(new DefaultZoneListener(handler), this);
         ZoneListenerRegistry.registerListener(this, new VisibleZoneListener());
-        ZoneListenerRegistry.registerListener(this, new PillagerOutpostListener());
 
         new CustomZonesCommand(this, handler, prefixHandler).registerCommand();
 
