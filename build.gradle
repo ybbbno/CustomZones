@@ -16,7 +16,7 @@ repositories {
 dependencies {
     compileOnly "io.papermc.paper:paper-api:1.21.4-R0.1-SNAPSHOT"
     compileOnly "dev.jorel:commandapi-bukkit-core:10.1.2"
-    compileOnly(files("./libs/YBMJ-0.1.jar"))
+    compileOnly(files("./libs/YBMJ-0.1.1.jar"))
 }
 
 def targetJavaVersion = 21

@@ -99,7 +99,6 @@ public class ZoneHandler {
                 public void run() {
                     int ticks = entityTicks.computeIfAbsent(uuid, k -> new HashMap<>()).compute(zone.name, (k, v) -> v == null ? 20 : v + 20);
                     dispatcher.onZoneStay(zone, uuid, ticks);
-                    // plugin.logger.info(entity.getName() + ", " + ticks); remove player on exit
                 }
             };
             task.runTaskTimer(plugin, 0L, 20L);
