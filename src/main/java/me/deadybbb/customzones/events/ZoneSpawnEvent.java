@@ -8,17 +8,19 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.UUID;
+
 public class ZoneSpawnEvent extends Event implements Cancellable {
     private static final HandlerList handlers = new HandlerList();
     private boolean cancelled = false;
 
     private final Zone zone;
-    private final Entity entity;
+    private final UUID uuid;
     private final CreatureSpawnEvent.SpawnReason spawnReason;
 
-    public ZoneSpawnEvent(Zone zone, Entity entity, CreatureSpawnEvent.SpawnReason spawnReason) {
+    public ZoneSpawnEvent(Zone zone, UUID uuid, CreatureSpawnEvent.SpawnReason spawnReason) {
         this.zone = zone;
-        this.entity = entity;
+        this.uuid = uuid;
         this.spawnReason = spawnReason;
     }
 
@@ -26,8 +28,8 @@ public class ZoneSpawnEvent extends Event implements Cancellable {
         return zone;
     }
 
-    public Entity getEntity() {
-        return entity;
+    public UUID getEntityUUID() {
+        return uuid;
     }
 
     public CreatureSpawnEvent.SpawnReason getSpawnReason() {

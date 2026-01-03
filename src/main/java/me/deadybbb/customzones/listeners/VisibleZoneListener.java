@@ -5,6 +5,7 @@ import me.deadybbb.customzones.events.ZoneStayEvent;
 import me.deadybbb.customzones.events.ZoneTickEvent;
 import me.deadybbb.customzones.prefixes.CustomZonePrefix;
 import me.deadybbb.ybmj.LegacyTextHandler;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
@@ -16,7 +17,7 @@ public class VisibleZoneListener implements Listener {
 
     @EventHandler
     public void onZoneStay(ZoneStayEvent event) {
-        if (!(event.getEntity() instanceof Player player)) return;
+        if (!(Bukkit.getEntity(event.getEntityUUID()) instanceof Player player)) return;
 
         player.sendActionBar(LegacyTextHandler.parseText(
                 "<green>Нахождение в зоне " + event.getZone().name + ": " + event.getCurrentTicks() / 20 + " секунд (" + event.getCurrentTicks() + " тиков)"

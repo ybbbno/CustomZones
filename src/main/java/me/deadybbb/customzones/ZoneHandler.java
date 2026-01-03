@@ -5,6 +5,7 @@ import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -34,21 +35,15 @@ public class ZoneHandler {
     }
 
     public void triggerEnter(UUID uuid, Zone zone) {
-        LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
-        if (entity != null) {
-            if (!dispatcher.onZoneEnter(zone, uuid).isCancelled()) {
-                startTask(uuid, zone);
-            }
+        if (!dispatcher.onZoneEnter(zone, uuid).isCancelled()) {
+            startTask(uuid, zone);
         }
     }
 
     public void triggerExit(UUID uuid, Zone zone) {
-        LivingEntity entity = (LivingEntity) Bukkit.getEntity(uuid);
-        if (entity != null) {
-            int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zone.name, 0);
-            if (!dispatcher.onZoneExit(zone, uuid, ticksSpent).isCancelled()) {
-                cancelTask(uuid, zone);
-            }
+        int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zone.name, 0);
+        if (!dispatcher.onZoneExit(zone, uuid, ticksSpent).isCancelled()) {
+            cancelTask(uuid, zone);
         }
     }
 
@@ -60,14 +55,14 @@ public class ZoneHandler {
                     if (zone.min.getWorld() == null) continue;
 
                     // Finding current entities
-                    List<LivingEntity> currentEntities = zone.min.getWorld().getNearbyEntities(
+                    List<Entity> currentEntities = zone.min.getWorld().getNearbyEntities(
                             zone.getBoundingBox(),
-                            e -> e instanceof LivingEntity
-                    ).stream().map(e -> (LivingEntity) e).toList();
+                            Objects::nonNull
+                    ).stream().toList();
 
                     String zoneName = zone.name;
                     Set<UUID> previousUUIDs = zoneEntities.computeIfAbsent(zoneName, k -> new HashSet<>());
-                    Set<UUID> currentUUIDs = currentEntities.stream().map(LivingEntity::getUniqueId).collect(Collectors.toSet());
+                    Set<UUID> currentUUIDs = currentEntities.stream().map(Entity::getUniqueId).collect(Collectors.toSet());
 
                     // Detect enters
                     for (UUID uuid : currentUUIDs) {
@@ -77,7 +72,7 @@ public class ZoneHandler {
                     }
 
                     // Detect exits
-                    for (UUID uuid : new HashSet<>(previousUUIDs)) {
+                    for (UUID uuid : previousUUIDs) {
                         if (!currentUUIDs.contains(uuid)) {
                             triggerExit(uuid, zone);
                         }
@@ -85,7 +80,7 @@ public class ZoneHandler {
 
                     zoneEntities.put(zone.name, currentUUIDs);
 
-                    dispatcher.onZoneTick(zone, currentEntities);
+                    dispatcher.onZoneTick(zone, currentUUIDs.stream().toList());
                 }
             }
         }.runTaskTimer(plugin, delay, period);

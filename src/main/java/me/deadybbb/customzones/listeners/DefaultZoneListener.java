@@ -24,7 +24,7 @@ public class DefaultZoneListener implements Listener {
         if (event.isCancelled()) return;
 
         for (Zone zone : handler.getZonesAtLocation(event.getLocation())) {
-            if (handler.getDispatcher().onZoneSpawn(zone, event.getEntity(), event.getSpawnReason()).isCancelled()) {
+            if (handler.getDispatcher().onZoneSpawn(zone, event.getEntity().getUniqueId(), event.getSpawnReason()).isCancelled()) {
                 event.setCancelled(true);
                 return;
             }
