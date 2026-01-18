@@ -13,7 +13,7 @@ public class CustomZonesAPI {
 
     public static CustomZonesAPI api() {
         Plugin p = Bukkit.getPluginManager().getPlugin("CustomZones");
-        if (p instanceof CustomZonesAPI) {
+        if (p instanceof CustomZones) {
             return new CustomZonesAPI((CustomZones) p);
         }
         return null;

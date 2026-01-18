@@ -166,6 +166,10 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public boolean addZone(Zone zone) {
+        removeZone(zone);
+        for (Entity entity : zone.min.getWorld().getNearbyEntities(zone.getBoundingBox(), Objects::nonNull).stream().toList()) {
+            triggerEnter(entity.getUniqueId(), zone);
+        }
         return zones.add(zone);
     }
 
@@ -174,6 +178,10 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public boolean removeZone(Zone zone) {
+        if (getZoneByName(zone.name) == null) return false;
+        for (UUID uuid : zoneEntities.get(zone.name)) {
+            triggerExit(uuid, zone);
+        }
         return zones.remove(zone);
     }
 }
