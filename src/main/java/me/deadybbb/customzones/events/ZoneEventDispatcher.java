@@ -1,10 +1,8 @@
 package me.deadybbb.customzones.events;
 
-import me.deadybbb.customzones.Zone;
+import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
-import org.bukkit.Bukkit;
-import org.bukkit.entity.Entity;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

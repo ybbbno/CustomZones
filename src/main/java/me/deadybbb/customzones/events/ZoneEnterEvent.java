@@ -1,8 +1,6 @@
 package me.deadybbb.customzones.events;
 
-import me.deadybbb.customzones.Zone;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
+import me.deadybbb.customzones.zone.Zone;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;

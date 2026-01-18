@@ -1,6 +1,6 @@
 package me.deadybbb.customzones.listeners;
 
-import me.deadybbb.customzones.Zone;
+import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.events.ZoneStayEvent;
 import me.deadybbb.customzones.events.ZoneTickEvent;
 import me.deadybbb.customzones.prefixes.CustomZonePrefix;

@@ -1,4 +1,4 @@
-package me.deadybbb.customzones;
+package me.deadybbb.customzones.zone;
 
 import me.deadybbb.ybmj.BasicConfigHandler;
 import me.deadybbb.ybmj.PluginProvider;
@@ -9,10 +9,10 @@ import org.bukkit.configuration.ConfigurationSection;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZoneConfigHandler extends BasicConfigHandler {
+public class ZoneConfigManager extends BasicConfigHandler {
     private final PluginProvider plugin;
 
-    public ZoneConfigHandler(PluginProvider plugin) {
+    public ZoneConfigManager(PluginProvider plugin) {
         super(plugin, "zones_config.yml");
         this.plugin = plugin;
     }

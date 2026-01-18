@@ -1,9 +1,8 @@
-package me.deadybbb.customzones;
+package me.deadybbb.customzones.zone;
 
 import org.bukkit.Location;
 import org.bukkit.util.BoundingBox;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class Zone {

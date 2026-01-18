@@ -1,37 +1,44 @@
-package me.deadybbb.customzones;
+package me.deadybbb.customzones.zone;
 
 import me.deadybbb.customzones.events.*;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
+import me.deadybbb.ybmj.BasicManagerHandler;
 import me.deadybbb.ybmj.PluginProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ZoneHandler {
-    private final ZoneConfigHandler configHandler;
-    private final PluginProvider plugin;
-    private final PrefixHandler handler;
+public class ZoneManager extends BasicManagerHandler {
+    private final ZoneConfigManager configHandler;
     private final ZoneEventDispatcher dispatcher;
 
-    public List<Zone> zones;
-    public final Map<UUID, Location> pos1 = new HashMap<>();
-    public final Map<UUID, Location> pos2 = new HashMap<>();
+    private final List<Zone> zones;
 
     private final Map<UUID, Map<String, BukkitRunnable>> activeTasks = new HashMap<>();
     private final Map<String, Set<UUID>> zoneEntities = new HashMap<>();
     private final Map<UUID, Map<String, Integer>> entityTicks = new HashMap<>();
 
-    public ZoneHandler(PluginProvider plugin, PrefixHandler handler) {
-        configHandler = new ZoneConfigHandler(plugin);
-        zones = configHandler.loadZonesFromConfig();
-        this.plugin = plugin;
-        this.handler = handler;
-        this.dispatcher = new ZoneEventDispatcher(plugin, handler);
+    public ZoneManager(PluginProvider plugin, PrefixHandler handler) {
+        super(plugin);
+        zones = new ArrayList<>();
+        configHandler = new ZoneConfigManager(plugin);
+        dispatcher = new ZoneEventDispatcher(plugin, handler);
+    }
+
+    @Override
+    protected void onInit() {
+        zones.clear();
+        zones.addAll(configHandler.loadZonesFromConfig());
+        startTimer(0L, 20L);
+    }
+
+    @Override
+    protected void onDeinit() {
+        configHandler.saveZonesToConfig(zones);
+        exit();
     }
 
     public void triggerEnter(UUID uuid, Zone zone) {
@@ -47,7 +54,7 @@ public class ZoneHandler {
         }
     }
 
-    public void startTimer(long delay, long period) {
+    private void startTimer(long delay, long period) {
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -84,6 +91,17 @@ public class ZoneHandler {
                 }
             }
         }.runTaskTimer(plugin, delay, period);
+    }
+
+    private void exit() {
+        for (Map<String, BukkitRunnable> tasks : activeTasks.values()) {
+            for (BukkitRunnable task : tasks.values()) {
+                task.cancel();
+            }
+        }
+        activeTasks.clear();
+        entityTicks.clear();
+        zoneEntities.clear();
     }
 
     private void startTask(UUID uuid, Zone zone) {
@@ -125,16 +143,6 @@ public class ZoneHandler {
         return dispatcher;
     }
 
-    public boolean reloadZonesFromConfig() {
-        try {
-            zones = configHandler.loadZonesFromConfig();
-            return true;
-        } catch (Exception e) {
-            plugin.logger.severe("Failed to load zones config:" + e);
-            return false;
-        }
-    }
-
     public List<String> getAllZonesNames(String zoneName) {
         return zones.stream()
                 .map(zone -> zone.name)
@@ -153,20 +161,19 @@ public class ZoneHandler {
                 .collect(Collectors.toList());
     }
 
-    public void saveZones() {
-        configHandler.saveZonesToConfig(zones);
+    public boolean addZone(String name, Location p1, Location p2, List<String> prefixes) {
+        return addZone(new Zone(name, p1, p2, prefixes));
     }
 
-    public void exit() {
-        saveZones();
-        for (Map<String, BukkitRunnable> tasks : activeTasks.values()) {
-            for (BukkitRunnable task : tasks.values()) {
-                task.cancel();
-            }
-        }
-        activeTasks.clear();
-        entityTicks.clear();
-        zoneEntities.clear();
-        zones.clear();
+    public boolean addZone(Zone zone) {
+        return zones.add(zone);
+    }
+
+    public boolean removeZone(String name) {
+        return removeZone(getZoneByName(name));
+    }
+
+    public boolean removeZone(Zone zone) {
+        return zones.remove(zone);
     }
 }

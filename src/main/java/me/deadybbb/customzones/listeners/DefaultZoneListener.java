@@ -1,8 +1,7 @@
 package me.deadybbb.customzones.listeners;
 
-import me.deadybbb.customzones.Zone;
-import me.deadybbb.customzones.ZoneHandler;
-import me.deadybbb.customzones.events.ZoneSpawnEvent;
+import me.deadybbb.customzones.zone.Zone;
+import me.deadybbb.customzones.zone.ZoneManager;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -13,9 +12,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.util.UUID;
 
 public class DefaultZoneListener implements Listener {
-    private final ZoneHandler handler;
+    private final ZoneManager handler;
 
-    public DefaultZoneListener(ZoneHandler handler) {
+    public DefaultZoneListener(ZoneManager handler) {
         this.handler = handler;
     }
 
