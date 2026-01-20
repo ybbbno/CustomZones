@@ -4,6 +4,7 @@ import me.deadybbb.customzones.events.*;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.BasicManagerHandler;
 import me.deadybbb.ybmj.PluginProvider;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -110,6 +111,10 @@ public class ZoneManager extends BasicManagerHandler {
             BukkitRunnable task = new BukkitRunnable() {
                 @Override
                 public void run() {
+                    if (!isEntityInZone(zone, uuid)) {
+                        triggerExit(uuid, zone);
+                        return;
+                    }
                     int ticks = entityTicks.computeIfAbsent(uuid, k -> new HashMap<>()).compute(zone.name, (k, v) -> v == null ? 20 : v + 20);
                     dispatcher.onZoneStay(zone, uuid, ticks);
                 }
@@ -173,15 +178,30 @@ public class ZoneManager extends BasicManagerHandler {
         return zones.add(zone);
     }
 
+    public boolean changeLocation(String name, Location min, Location max) {
+        Zone zone = getZoneByName(name);
+        if (zone == null) return false;
+        zone.min = min;
+        zone.max = max;
+        return true;
+    }
+
     public boolean removeZone(String name) {
         return removeZone(getZoneByName(name));
     }
 
     public boolean removeZone(Zone zone) {
-        if (getZoneByName(zone.name) == null) return false;
-        for (UUID uuid : zoneEntities.get(zone.name)) {
-            triggerExit(uuid, zone);
-        }
+        try {
+            zoneEntities.get(zone.name).forEach(uuid -> triggerExit(uuid, zone));
+        } catch (NullPointerException ignored) { }
+
         return zones.remove(zone);
+    }
+
+    private boolean isEntityInZone(Zone zone, UUID uuid) {
+        return zone.min.getWorld().getNearbyEntities(
+                zone.getBoundingBox(),
+                Objects::nonNull
+        ).stream().anyMatch(entity -> entity.getUniqueId() == uuid);
     }
 }

@@ -3,6 +3,7 @@ package me.deadybbb.customzones.events;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -10,6 +11,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class ZoneEventDispatcher {
@@ -29,6 +31,7 @@ public class ZoneEventDispatcher {
 
     public ZoneEnterEvent onZoneEnter(Zone zone, UUID uuid) {
         ZoneEnterEvent event = new ZoneEnterEvent(zone, uuid);
+//        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         triggerEvent(event, zone);
         return event;
     }
@@ -36,12 +39,14 @@ public class ZoneEventDispatcher {
     public ZoneExitEvent onZoneExit(Zone zone, UUID uuid, int ticksSpent) {
         ZoneExitEvent event = new ZoneExitEvent(zone, uuid, ticksSpent);
         triggerEvent(event, zone);
+//        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         return event;
     }
 
     public ZoneStayEvent onZoneStay(Zone zone, UUID uuid, int currentTicks) {
         ZoneStayEvent event = new ZoneStayEvent(zone, uuid, currentTicks);
         triggerEvent(event, zone);
+//        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         return event;
     }
 
