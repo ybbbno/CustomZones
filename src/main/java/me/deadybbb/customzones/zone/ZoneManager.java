@@ -4,7 +4,6 @@ import me.deadybbb.customzones.events.*;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.BasicManagerHandler;
 import me.deadybbb.ybmj.PluginProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -196,6 +195,10 @@ public class ZoneManager extends BasicManagerHandler {
         } catch (NullPointerException ignored) { }
 
         return zones.remove(zone);
+    }
+
+    public Set<UUID> getEntitiesInZone(Zone zone) {
+        return zoneEntities.get(zone.name);
     }
 
     private boolean isEntityInZone(Zone zone, UUID uuid) {

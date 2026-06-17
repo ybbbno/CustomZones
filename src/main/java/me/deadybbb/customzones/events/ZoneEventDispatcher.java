@@ -4,6 +4,7 @@ import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
+import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -52,6 +53,12 @@ public class ZoneEventDispatcher {
 
     public ZoneTickEvent onZoneTick(Zone zone, List<UUID> uuids) {
         ZoneTickEvent event = new ZoneTickEvent(zone, uuids);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZonePlaceBlockEvent onZonePlaceBlock(Zone zone, UUID uuid, Block block) {
+        ZonePlaceBlockEvent event = new ZonePlaceBlockEvent(zone, uuid, block);
         triggerEvent(event, zone);
         return event;
     }
