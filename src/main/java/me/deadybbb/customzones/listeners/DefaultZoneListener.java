@@ -8,6 +8,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -39,6 +40,21 @@ public class DefaultZoneListener implements Listener {
     }
 
     @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        if (event.isCancelled()) return;
+
+        UUID uuid = event.getPlayer().getUniqueId();
+        Block block = event.getBlock();
+
+        for (Zone zone : handler.getZonesAtLocation(block.getLocation())) {
+            if (dispatcher.onZoneBreakBlock(zone, uuid, block).isCancelled()) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
     public void onCreatureSpawn(CreatureSpawnEvent event) {
         if (event.isCancelled()) return;
 
@@ -58,7 +74,7 @@ public class DefaultZoneListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
 
-        for(Zone zone : handler.getZonesAtLocation(player.getLocation())) {
+        for (Zone zone : handler.getZonesAtLocation(player.getLocation())) {
             handler.triggerEnter(uuid, zone);
         }
     }

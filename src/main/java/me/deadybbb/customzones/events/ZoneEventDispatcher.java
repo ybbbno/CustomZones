@@ -3,7 +3,6 @@ package me.deadybbb.customzones.events;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
-import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
@@ -12,7 +11,6 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 public class ZoneEventDispatcher {
@@ -59,6 +57,12 @@ public class ZoneEventDispatcher {
 
     public ZonePlaceBlockEvent onZonePlaceBlock(Zone zone, UUID uuid, Block block) {
         ZonePlaceBlockEvent event = new ZonePlaceBlockEvent(zone, uuid, block);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneBreakBlockEvent onZoneBreakBlock(Zone zone, UUID uuid, Block block) {
+        ZoneBreakBlockEvent event = new ZoneBreakBlockEvent(zone, uuid, block);
         triggerEvent(event, zone);
         return event;
     }
