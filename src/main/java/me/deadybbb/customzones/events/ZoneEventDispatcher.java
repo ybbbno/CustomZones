@@ -1,13 +1,24 @@
 package me.deadybbb.customzones.events;
 
+import me.deadybbb.customzones.events.entity.*;
+import me.deadybbb.customzones.events.entity.hanging.ZoneHangingBreakEvent;
+import me.deadybbb.customzones.events.entity.hanging.ZoneHangingPlaceEvent;
+import me.deadybbb.customzones.events.zone.*;
+import me.deadybbb.customzones.events.zone.command.*;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Hanging;
+import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.hanging.HangingBreakEvent;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemStack;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -22,28 +33,58 @@ public class ZoneEventDispatcher {
         this.plugin = plugin;
     }
 
-    public ZoneSpawnEvent onZoneSpawn(Zone zone, UUID uuid, CreatureSpawnEvent.SpawnReason spawnReason) {
-        ZoneSpawnEvent event = new ZoneSpawnEvent(zone, uuid, spawnReason);
+    public ZoneCreateEvent onZoneCreate(Zone zone) {
+        ZoneCreateEvent event = new ZoneCreateEvent(zone);
         triggerEvent(event, zone);
         return event;
     }
 
-    public ZoneEnterEvent onZoneEnter(Zone zone, UUID uuid) {
-        ZoneEnterEvent event = new ZoneEnterEvent(zone, uuid);
+    public ZoneRemoveEvent onZoneRemove(Zone zone) {
+        ZoneRemoveEvent event = new ZoneRemoveEvent(zone);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneCommandChangeEvent onZoneCommandChange(Zone zone) {
+        ZoneCommandChangeEvent event = new ZoneCommandChangeEvent(zone);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneCommandAddPrefixEvent onZoneCommandAddPrefix(Zone zone) {
+        ZoneCommandAddPrefixEvent event = new ZoneCommandAddPrefixEvent(zone);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneCommandRemovePrefixEvent onZoneCommandRemovePrefix(Zone zone) {
+        ZoneCommandRemovePrefixEvent event = new ZoneCommandRemovePrefixEvent(zone);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneCreatureSpawnEvent onZoneCreatureSpawn(Zone zone, UUID uuid, CreatureSpawnEvent.SpawnReason spawnReason) {
+        ZoneCreatureSpawnEvent event = new ZoneCreatureSpawnEvent(zone, uuid, spawnReason);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneEntityEnterEvent onZoneEntityEnter(Zone zone, UUID uuid) {
+        ZoneEntityEnterEvent event = new ZoneEntityEnterEvent(zone, uuid);
 //        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         triggerEvent(event, zone);
         return event;
     }
 
-    public ZoneExitEvent onZoneExit(Zone zone, UUID uuid, int ticksSpent) {
-        ZoneExitEvent event = new ZoneExitEvent(zone, uuid, ticksSpent);
+    public ZoneEntityExitEvent onZoneEntityExit(Zone zone, UUID uuid, int ticksSpent) {
+        ZoneEntityExitEvent event = new ZoneEntityExitEvent(zone, uuid, ticksSpent);
         triggerEvent(event, zone);
 //        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         return event;
     }
 
-    public ZoneStayEvent onZoneStay(Zone zone, UUID uuid, int currentTicks) {
-        ZoneStayEvent event = new ZoneStayEvent(zone, uuid, currentTicks);
+    public ZoneEntityStayEvent onZoneEntityStay(Zone zone, UUID uuid, int currentTicks) {
+        ZoneEntityStayEvent event = new ZoneEntityStayEvent(zone, uuid, currentTicks);
         triggerEvent(event, zone);
 //        plugin.logger.info(event.getEventName()+" "+zone.name+" "+ Objects.requireNonNull(Bukkit.getEntity(event.getEntityUUID())).getName());
         return event;
@@ -55,19 +96,31 @@ public class ZoneEventDispatcher {
         return event;
     }
 
-    public ZonePlaceBlockEvent onZonePlaceBlock(Zone zone, UUID uuid, Block block) {
-        ZonePlaceBlockEvent event = new ZonePlaceBlockEvent(zone, uuid, block);
+    public ZonePlayerPlaceBlockEvent onZonePlayerPlaceBlock(Zone zone, UUID uuid, Block block) {
+        ZonePlayerPlaceBlockEvent event = new ZonePlayerPlaceBlockEvent(zone, uuid, block);
         triggerEvent(event, zone);
         return event;
     }
 
-    public ZoneBreakBlockEvent onZoneBreakBlock(Zone zone, UUID uuid, Block block) {
-        ZoneBreakBlockEvent event = new ZoneBreakBlockEvent(zone, uuid, block);
+    public ZonePlayerBreakBlockEvent onZonePlayerBreakBlock(Zone zone, UUID uuid, Block block) {
+        ZonePlayerBreakBlockEvent event = new ZonePlayerBreakBlockEvent(zone, uuid, block);
         triggerEvent(event, zone);
         return event;
     }
 
-    public void triggerEvent(Event event, Zone zone) {
+    public ZoneHangingPlaceEvent onZoneHangingPlace(Zone zone, Hanging hanging, Player player, Block block, BlockFace blockFace, EquipmentSlot hand, ItemStack itemStack) {
+        ZoneHangingPlaceEvent event = new ZoneHangingPlaceEvent(zone, hanging, player, block, blockFace, hand, itemStack);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZoneHangingBreakEvent onZoneHangingBreak(Zone zone, Hanging hanging, HangingBreakEvent.RemoveCause cause) {
+        ZoneHangingBreakEvent event = new ZoneHangingBreakEvent(zone, hanging, cause);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public void triggerEvent(ZoneEvent event, Zone zone) {
         List<String> zonePrefixes = zone.prefixes.stream().map(String::toLowerCase).toList();
 
         for (String zonePrefix : zonePrefixes) {

@@ -4,6 +4,7 @@ import dev.jorel.commandapi.CommandAPICommand;
 import dev.jorel.commandapi.arguments.ArgumentSuggestions;
 import dev.jorel.commandapi.arguments.StringArgument;
 import dev.jorel.commandapi.executors.PlayerCommandExecutor;
+import me.deadybbb.customzones.events.ZoneEventDispatcher;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.zone.ZoneManager;
@@ -17,6 +18,7 @@ public class CustomZonesCommand {
     private final CustomZones plugin;
     private final ZoneManager handler;
     private final PrefixHandler prefixHandler;
+    private final ZoneEventDispatcher dispatcher;
 
     private final Map<UUID, Location> pos1 = new HashMap<>();
     private final Map<UUID, Location> pos2 = new HashMap<>();
@@ -25,6 +27,7 @@ public class CustomZonesCommand {
         this.plugin = plugin;
         this.handler = handler;
         this.prefixHandler = prefixHandler;
+        this.dispatcher = handler.getDispatcher();
     }
 
     public void registerCommand() {
@@ -111,6 +114,12 @@ public class CustomZonesCommand {
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Установите обе точки в одном мире!");
                         return;
                     }
+
+                    if (dispatcher.onZoneCommandChange(changeZone).isCancelled()) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Изменение невозможно!");
+                        return;
+                    }
+
                     changeZone.min = newP1;
                     changeZone.max = newP2;
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Границы зоны " + zoneName + " обновлены!");
@@ -133,6 +142,12 @@ public class CustomZonesCommand {
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Зона " + zoneName + " не найдена!");
                         return;
                     }
+
+                    if (dispatcher.onZoneCommandAddPrefix(zone).isCancelled()) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Изменение невозможно!");
+                        return;
+                    }
+
                     zone.addPrefix(prefix);
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Префикс " + prefix + " добавлен к зоне " + zoneName);
                 });
@@ -158,6 +173,12 @@ public class CustomZonesCommand {
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Префикс " + prefix + " не найден в зоне " + zoneName);
                         return;
                     }
+
+                    if (dispatcher.onZoneCommandRemovePrefix(zone).isCancelled()) {
+                        LegacyTextHandler.sendFormattedMessage(player, "<red>Изменение невозможно!");
+                        return;
+                    }
+
                     zone.removePrefix(prefix);
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Префикс " + prefix + " удалён из зоны " + zoneName);
                 });

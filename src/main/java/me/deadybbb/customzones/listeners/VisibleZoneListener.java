@@ -1,8 +1,8 @@
 package me.deadybbb.customzones.listeners;
 
 import me.deadybbb.customzones.zone.Zone;
-import me.deadybbb.customzones.events.ZoneStayEvent;
-import me.deadybbb.customzones.events.ZoneTickEvent;
+import me.deadybbb.customzones.events.entity.ZoneEntityStayEvent;
+import me.deadybbb.customzones.events.zone.ZoneTickEvent;
 import me.deadybbb.customzones.prefixes.CustomZonePrefix;
 import me.deadybbb.ybmj.LegacyTextHandler;
 import org.bukkit.Bukkit;
@@ -16,7 +16,7 @@ import org.bukkit.event.Listener;
 public class VisibleZoneListener implements Listener {
 
     @EventHandler
-    public void onZoneStay(ZoneStayEvent event) {
+    public void onZoneStay(ZoneEntityStayEvent event) {
         if (!(Bukkit.getEntity(event.getEntityUUID()) instanceof Player player)) return;
 
         player.sendActionBar(LegacyTextHandler.parseText(

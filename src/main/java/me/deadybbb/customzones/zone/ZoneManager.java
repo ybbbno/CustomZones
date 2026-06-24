@@ -42,14 +42,14 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public void triggerEnter(UUID uuid, Zone zone) {
-        if (!dispatcher.onZoneEnter(zone, uuid).isCancelled()) {
+        if (!dispatcher.onZoneEntityEnter(zone, uuid).isCancelled()) {
             startTask(uuid, zone);
         }
     }
 
     public void triggerExit(UUID uuid, Zone zone) {
         int ticksSpent = entityTicks.getOrDefault(uuid, new HashMap<>()).getOrDefault(zone.name, 0);
-        if (!dispatcher.onZoneExit(zone, uuid, ticksSpent).isCancelled()) {
+        if (!dispatcher.onZoneEntityExit(zone, uuid, ticksSpent).isCancelled()) {
             cancelTask(uuid, zone);
         }
     }
@@ -115,7 +115,7 @@ public class ZoneManager extends BasicManagerHandler {
                         return;
                     }
                     int ticks = entityTicks.computeIfAbsent(uuid, k -> new HashMap<>()).compute(zone.name, (k, v) -> v == null ? 20 : v + 20);
-                    dispatcher.onZoneStay(zone, uuid, ticks);
+                    dispatcher.onZoneEntityStay(zone, uuid, ticks);
                 }
             };
             task.runTaskTimer(plugin, 0L, 20L);
@@ -170,6 +170,10 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public boolean addZone(Zone zone) {
+        if (dispatcher.onZoneCreate(zone).isCancelled()) {
+            return false;
+        }
+
         removeZone(zone);
         for (Entity entity : zone.min.getWorld().getNearbyEntities(zone.getBoundingBox(), Objects::nonNull).stream().toList()) {
             triggerEnter(entity.getUniqueId(), zone);
@@ -190,6 +194,10 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public boolean removeZone(Zone zone) {
+        if (dispatcher.onZoneRemove(zone).isCancelled()) {
+            return false;
+        }
+
         try {
             zoneEntities.get(zone.name).forEach(uuid -> triggerExit(uuid, zone));
         } catch (NullPointerException ignored) { }
