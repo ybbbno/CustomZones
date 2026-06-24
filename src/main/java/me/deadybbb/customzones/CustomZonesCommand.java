@@ -143,12 +143,14 @@ public class CustomZonesCommand {
                         return;
                     }
 
+                    zone.addPrefix(prefix);
+
                     if (dispatcher.onZoneCommandAddPrefix(zone).isCancelled()) {
+                        zone.removePrefix(prefix);
                         LegacyTextHandler.sendFormattedMessage(player, "<red>Изменение невозможно!");
                         return;
                     }
 
-                    zone.addPrefix(prefix);
                     LegacyTextHandler.sendFormattedMessage(player, "<green>Префикс " + prefix + " добавлен к зоне " + zoneName);
                 });
 
