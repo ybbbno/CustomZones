@@ -5,6 +5,7 @@ import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,12 +58,25 @@ public class ZoneConfigManager extends BasicConfigHandler {
         return zones;
     }
 
-    public boolean saveZonesToConfig(List<Zone> zones) {
+    public void saveZonesToConfig(@NonNull List<Zone> zones) {
         config.set("zones", null);
 
         for (Zone zone : zones) {
             String path = "zones." + zone.name;
-            config.set(path + ".world", zone.min.getWorld().getName());
+
+            String worldName = null;
+            if (zone.min.getWorld() != null) {
+                worldName = zone.min.getWorld().getName();
+            } else if (zone.max.getWorld() != null) {
+                worldName = zone.max.getWorld().getName();
+            }
+
+            if (worldName == null) {
+                plugin.logger.warning("Skipping zone " + zone.name + " because its world is null (probably unloaded)");
+                continue;
+            }
+
+            config.set(path + ".world", worldName);
             config.set(path + ".min.x", zone.min.getX());
             config.set(path + ".min.y", zone.min.getY());
             config.set(path + ".min.z", zone.min.getZ());
@@ -72,6 +86,6 @@ public class ZoneConfigManager extends BasicConfigHandler {
             config.set(path + ".prefixes", zone.prefixes);
         }
 
-        return saveConfig();
+        saveConfig();
     }
 }

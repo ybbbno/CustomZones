@@ -3,6 +3,7 @@ package me.deadybbb.customzones.listeners;
 import me.deadybbb.customzones.events.ZoneEventDispatcher;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.zone.ZoneManager;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
@@ -16,6 +17,8 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.hanging.HangingBreakEvent;
 import org.bukkit.event.hanging.HangingPlaceEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -100,6 +103,7 @@ public class DefaultZoneListener implements Listener {
 
         UUID uuid = event.getEntity().getUniqueId();
         CreatureSpawnEvent.SpawnReason reason = event.getSpawnReason();
+        if (event.getLocation().getWorld() == null) return;
 
         for (Zone zone : handler.getZonesAtLocation(event.getLocation())) {
             if (dispatcher.onZoneCreatureSpawn(zone, uuid, reason).isCancelled()) {
@@ -126,6 +130,34 @@ public class DefaultZoneListener implements Listener {
 
         for(Zone zone : handler.getZonesAtLocation(entity.getLocation())) {
             handler.triggerExit(uuid, zone);
+        }
+    }
+
+    @EventHandler
+    public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
+        Player player = event.getPlayer();
+
+        Material bucket = event.getBucket();
+
+        for (Zone zone : handler.getZonesAtLocation(player.getLocation())) {
+            if (dispatcher.onZonePlayerBucketEmptyEvent(zone, player, bucket).isCancelled()) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPlayerBucketFill(PlayerBucketFillEvent event) {
+        Player player = event.getPlayer();
+
+        Material bucket = event.getBucket();
+
+        for (Zone zone : handler.getZonesAtLocation(player.getLocation())) {
+            if (dispatcher.onZonePlayerBucketFillEvent(zone, player, bucket).isCancelled()) {
+                event.setCancelled(true);
+                return;
+            }
         }
     }
 }

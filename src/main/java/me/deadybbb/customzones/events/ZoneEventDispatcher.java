@@ -8,6 +8,7 @@ import me.deadybbb.customzones.events.zone.command.*;
 import me.deadybbb.customzones.zone.Zone;
 import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.PluginProvider;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Hanging;
@@ -116,6 +117,18 @@ public class ZoneEventDispatcher {
 
     public ZoneHangingBreakEvent onZoneHangingBreak(Zone zone, Hanging hanging, HangingBreakEvent.RemoveCause cause) {
         ZoneHangingBreakEvent event = new ZoneHangingBreakEvent(zone, hanging, cause);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZonePlayerBucketEmptyEvent onZonePlayerBucketEmptyEvent(Zone zone, Player player, Material bucket) {
+        ZonePlayerBucketEmptyEvent event = new ZonePlayerBucketEmptyEvent(zone, player, bucket);
+        triggerEvent(event, zone);
+        return event;
+    }
+
+    public ZonePlayerBucketFillEvent onZonePlayerBucketFillEvent(Zone zone, Player player, Material bucket) {
+        ZonePlayerBucketFillEvent event = new ZonePlayerBucketFillEvent(zone, player, bucket);
         triggerEvent(event, zone);
         return event;
     }

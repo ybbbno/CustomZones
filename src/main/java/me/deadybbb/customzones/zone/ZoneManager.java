@@ -5,6 +5,7 @@ import me.deadybbb.customzones.prefixes.PrefixHandler;
 import me.deadybbb.ybmj.BasicManagerHandler;
 import me.deadybbb.ybmj.PluginProvider;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -159,9 +160,12 @@ public class ZoneManager extends BasicManagerHandler {
     }
 
     public List<Zone> getZonesAtLocation(Location location) {
+        World world = location.getWorld();
+        if (world == null) return List.of();
+
         return zones.stream()
-                .filter(zone -> zone.min.getWorld().equals(location.getWorld()) &&
-                        zone.getBoundingBox().contains(location.toVector()))
+                .filter(zone -> world.equals(zone.min.getWorld())
+                        && zone.getBoundingBox().contains(location.toVector()))
                 .collect(Collectors.toList());
     }
 
@@ -207,6 +211,10 @@ public class ZoneManager extends BasicManagerHandler {
 
     public Set<UUID> getEntitiesInZone(Zone zone) {
         return zoneEntities.get(zone.name);
+    }
+
+    public List<Zone> getZonesByPrefix(String prefix) {
+        return zones.stream().filter(zone -> zone.hasPrefix(prefix)).toList();
     }
 
     private boolean isEntityInZone(Zone zone, UUID uuid) {
